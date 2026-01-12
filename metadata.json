@@ -1,0 +1,7 @@
+{
+  "name": "K-COAT Studio",
+  "description": "An automated blog posting dashboard for K-COAT paint construction services. Features AI-powered content generation, image before/after comparison, and SEO-optimized HTML blog creation.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
