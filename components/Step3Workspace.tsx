@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { N8NResponse, ContentBlock } from '../types';
 import { copyRichTextToClipboard } from '../utils';
-import { Loader2, Check, Copy, GripVertical, Trash2, Plus, Image as ImageIcon, Layout, ArrowLeft, Save, Sparkles, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, Check, CheckCircle, Copy, GripVertical, Trash2, Plus, Image as ImageIcon, Layout, ArrowLeft, Save, Sparkles, Clock, AlertTriangle } from 'lucide-react';
 
 interface Step3WorkspaceProps {
   isGenerating: boolean;
@@ -16,37 +16,37 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
   const [title, setTitle] = useState('');
   const [hashtags, setHashtags] = useState('');
   const [draggedImage, setDraggedImage] = useState<string | null>(null);
+  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
 
   useEffect(() => {
     if (result) {
       setTitle(result.title || '');
       setHashtags(result.hashtags || '');
-      
-      if (result.html) {
+
+      // Use sections if available (new format)
+      if (result.sections && result.sections.length > 0) {
+        const initialBlocks: ContentBlock[] = result.sections.map((section, idx) => ({
+          id: `block-${idx}-${Date.now()}`,
+          type: 'text',
+          content: section.content,
+          sectionType: section.type // Store section type for styling
+        }));
+        setBlocks(initialBlocks);
+      }
+      // Fallback to html parsing (old format)
+      else if (result.html) {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = result.html;
         const initialBlocks: ContentBlock[] = [];
-        
-        // div.content-block이나 직접적인 요소들을 블록으로 분리
-        const elements = tempDiv.querySelectorAll('.content-block');
-        if (elements.length > 0) {
-          elements.forEach((el, idx) => {
-            initialBlocks.push({
-              id: `block-${idx}-${Date.now()}`,
-              type: 'text',
-              content: el.innerHTML
-            });
+
+        Array.from(tempDiv.children).forEach((child, idx) => {
+          initialBlocks.push({
+            id: `block-${idx}-${Date.now()}`,
+            type: 'text',
+            content: child.outerHTML
           });
-        } else {
-          Array.from(tempDiv.children).forEach((child, idx) => {
-            initialBlocks.push({
-              id: `block-${idx}-${Date.now()}`,
-              type: 'text',
-              content: child.outerHTML
-            });
-          });
-        }
+        });
         setBlocks(initialBlocks);
       }
     }
@@ -101,25 +101,62 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
       newBlocks.splice(index, 0, newBlock);
       setBlocks(newBlocks);
       setDraggedImage(null);
+    } else if (draggedBlockId) {
+      const draggedIndex = blocks.findIndex(b => b.id === draggedBlockId);
+      if (draggedIndex === -1) return;
+
+      const newBlocks = [...blocks];
+      const [draggedBlock] = newBlocks.splice(draggedIndex, 1);
+
+      let targetIndex = index;
+      if (draggedIndex < index) {
+        targetIndex--;
+      }
+
+      newBlocks.splice(targetIndex, 0, draggedBlock);
+      setBlocks(newBlocks);
+      setDraggedBlockId(null);
     }
+  };
+
+  const handleBlockDragStart = (blockId: string) => {
+    setDraggedBlockId(blockId);
+  };
+
+  const handleBlockDragEnd = () => {
+    setDraggedBlockId(null);
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700 pb-20">
       {isGenerating && (
-        <div className="bg-[#1A1D2E] text-white p-6 rounded-3xl shadow-2xl flex items-center justify-between animate-pulse">
-          <div className="flex items-center">
-            <Loader2 className="w-8 h-8 mr-4 text-[#FF6B35] animate-spin" />
-            <div>
-              <h3 className="font-black text-lg">고성능 AI 이미지 및 텍스트 생성 중...</h3>
-              <p className="text-gray-400 text-sm">합성 이미지 생성에 <b>약 5~10분</b>이 소요될 수 있습니다. 창을 닫지 마세요.</p>
+        <div className="bg-[#1A1D2E] text-white p-6 rounded-3xl shadow-2xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Loader2 className="w-8 h-8 mr-4 text-[#FF6B35] animate-spin" />
+              <div>
+                <h3 className="font-black text-lg">AI가 콘텐츠를 생성하고 있습니다</h3>
+                <p className="text-gray-400 text-sm">텍스트와 이미지를 함께 처리 중입니다</p>
+              </div>
+            </div>
+            <div className="hidden md:block">
+              <div className="px-4 py-2 bg-white/10 rounded-full text-xs font-bold border border-white/20">
+                처리 중...
+              </div>
             </div>
           </div>
-          <div className="hidden md:block">
-            <div className="px-4 py-2 bg-white/10 rounded-full text-xs font-bold border border-white/20">
-              ETA: 5~10 MIN
+          {blocks.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="flex items-center text-sm">
+                <Check className="w-4 h-4 mr-2 text-green-400" />
+                <span className="text-gray-300">텍스트 블록 {blocks.length}개 생성 완료</span>
+              </div>
+              <div className="flex items-center text-sm mt-2">
+                <Loader2 className="w-4 h-4 mr-2 text-[#FF6B35] animate-spin" />
+                <span className="text-gray-300">이미지 합성 중... (5~10분 소요)</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -171,10 +208,18 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
             </div>
 
             <div className="space-y-1">
+              {blocks.length === 0 && isGenerating && (
+                <div className="py-20 flex flex-col items-center justify-center text-gray-300">
+                  <Loader2 className="w-12 h-12 mb-4 text-[#FF6B35] animate-spin" />
+                  <p className="text-lg font-bold text-[#1A1D2E] mb-2">AI가 블로그 콘텐츠를 생성하고 있습니다</p>
+                  <p className="text-sm italic">각 섹션이 블록 형태로 표시됩니다...</p>
+                </div>
+              )}
+
               {blocks.length === 0 && !isGenerating && (
                 <div className="py-20 flex flex-col items-center justify-center text-gray-300">
                   <Clock className="w-10 h-10 mb-2 animate-pulse" />
-                  <p className="italic">AI가 데이터를 전송받는 중입니다...</p>
+                  <p className="italic">데이터를 기다리는 중...</p>
                 </div>
               )}
               
@@ -182,12 +227,20 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
               
               {blocks.map((block, idx) => (
                 <React.Fragment key={block.id}>
-                  <div className="group relative flex items-start gap-4 p-4 rounded-3xl hover:bg-gray-50/50 transition-all border border-transparent hover:border-gray-100">
+                  <div
+                    draggable
+                    onDragStart={() => handleBlockDragStart(block.id)}
+                    onDragEnd={handleBlockDragEnd}
+                    className={`group relative flex items-start gap-4 p-4 rounded-3xl hover:bg-gray-50/50 transition-all border border-transparent hover:border-gray-100 animate-in fade-in slide-in-from-left-4 ${
+                      draggedBlockId === block.id ? 'opacity-50' : ''
+                    }`}
+                    style={{ animationDelay: `${idx * 50}ms`, animationDuration: '300ms' }}
+                  >
                     <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-4">
                       <div className="cursor-grab active:cursor-grabbing p-2 bg-white rounded-xl shadow-sm border border-gray-100">
                         <GripVertical className="w-4 h-4 text-gray-400" />
                       </div>
-                      <button 
+                      <button
                         onClick={() => removeBlock(block.id)}
                         className="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-red-300 hover:text-red-500 transition-colors"
                       >
@@ -197,7 +250,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
 
                     <div className="flex-1">
                       {block.type === 'text' ? (
-                        <div 
+                        <div
                           contentEditable
                           suppressContentEditableWarning
                           onBlur={(e) => updateBlock(block.id, e.currentTarget.innerHTML)}
@@ -243,19 +296,28 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                {result?.images?.map((img, idx) => (
-                  <div 
-                    key={idx}
-                    draggable
-                    onDragStart={() => setDraggedImage(img.base64 || img.url)}
-                    className="aspect-square bg-white/5 rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing hover:ring-4 ring-[#FF6B35] transition-all group relative border border-white/5 shadow-inner"
-                  >
-                    <img src={img.base64 || img.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Plus className="text-white w-6 h-6" />
+                {result?.images?.map((img, idx) => {
+                  // Extract image URL from HTML if needed
+                  let imageUrl = img;
+                  if (typeof img === 'string' && img.includes('<img')) {
+                    const match = img.match(/src="([^"]+)"/);
+                    if (match) imageUrl = match[1];
+                  }
+
+                  return (
+                    <div
+                      key={idx}
+                      draggable
+                      onDragStart={() => setDraggedImage(imageUrl)}
+                      className="aspect-square bg-white/5 rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing hover:ring-4 ring-[#FF6B35] transition-all group relative border border-white/5 shadow-inner"
+                    >
+                      <img src={imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Plus className="text-white w-6 h-6" />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 
                 {isGenerating && (
                   <>

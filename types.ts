@@ -28,13 +28,20 @@ export interface ContentBlock {
   id: string;
   type: BlockType;
   content: string; // 텍스트 내용 또는 이미지 URL/Base64
+  sectionType?: string; // Section type from AI (header, intro, product, etc.)
+}
+
+export interface N8NSection {
+  type: string; // header, intro, product, opening, usp, faq, tech, philosophy, process, recap, closing
+  content: string;
 }
 
 export interface N8NResponse {
   success: boolean;
-  html?: string;
+  html?: string; // deprecated, use sections instead
+  sections?: N8NSection[];
   title?: string;
-  images?: { url: string; base64: string }[];
+  images?: string[]; // Array of image URLs or HTML
   hashtags?: string;
 }
 

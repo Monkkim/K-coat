@@ -64,54 +64,23 @@ const App: React.FC = () => {
       const data = await response.json();
       console.log("Raw API Response:", data);
 
-      let finalHtml = "";
-      let finalTitle = `(${formData.buildingName}) 탄성코트 시공 후기`;
-      let finalImages = [];
-      let finalHashtags = "#탄성코트 #KCOAT #베란다칠 #결로방지";
+      let finalTitle = data.title || `(${formData.buildingName}) 탄성코트 시공 후기`;
+      let finalSections = data.sections || [];
+      let finalImages = data.images || [];
+      let finalHashtags = data.hashtags || "#탄성코트 #KCOAT #베란다칠 #결로방지";
 
-      // 스크린샷과 같은 블록형 배열 데이터 처리
-      const targetData = Array.isArray(data) ? data : [data];
-      
-      // 1. 텍스트 블록 조립
-      const textBlocks = targetData.filter(item => item.text || item.content || item.html);
-      if (textBlocks.length > 0) {
-        finalHtml = textBlocks.map(item => {
-          const label = item.label || item.tag || item.header || "";
-          const content = (item.text || item.content || item.html || "").replace(/\n/g, '<br/>');
-          
-          if (!label) return `<p style="margin-bottom: 20px;">${content}</p>`;
-          
-          return `
-            <div style="margin-bottom: 40px;">
-              <h3 style="color: #FF6B35; font-size: 18px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center;">
-                <span style="background: #FF6B35; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 10px;">${label}</span>
-              </h3>
-              <p style="line-height: 1.8; color: #333; font-size: 16px;">${content}</p>
-            </div>
-          `;
-        }).join("");
-      }
-
-      // 2. 이미지 데이터 추출
-      const imageData = targetData.find(d => d.images);
-      if (imageData && imageData.images) {
-        finalImages = imageData.images;
-      } else {
-        // 이미지가 아직 없다면 원본 업로드 사진이라도 보여줌
-        finalImages = processedSets.map(s => ({ url: s.after, base64: s.after }));
-      }
-
-      // 3. 해시태그 및 기타 정보
-      const metaData = targetData.find(d => d.hashtags || d.title);
-      if (metaData) {
-        if (metaData.title) finalTitle = metaData.title;
-        if (metaData.hashtags) finalHashtags = metaData.hashtags;
+      // Backward compatibility: if html exists but no sections, parse html
+      if (!finalSections.length && data.html) {
+        finalSections = [{
+          type: 'text',
+          content: data.html
+        }];
       }
 
       setApiResult({
         success: true,
         title: finalTitle,
-        html: finalHtml || '<p>내용을 생성했습니다. 편집을 시작하세요.</p>',
+        sections: finalSections,
         images: finalImages,
         hashtags: finalHashtags
       });
