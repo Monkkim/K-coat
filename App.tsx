@@ -64,16 +64,73 @@ const App: React.FC = () => {
       const data = await response.json();
       console.log("Raw API Response:", data);
 
-      let finalTitle = data.title || `(${formData.buildingName}) 탄성코트 시공 후기`;
-      let finalSections = data.sections || [];
-      let finalImages = data.images || [];
-      let finalHashtags = data.hashtags || "#탄성코트 #KCOAT #베란다칠 #결로방지";
+      // Handle array response (n8n returns array with single object)
+      const responseData = Array.isArray(data) ? data[0] : data;
 
-      // Backward compatibility: if html exists but no sections, parse html
-      if (!finalSections.length && data.html) {
+      let finalTitle = responseData.title || `(${formData.buildingName}) 탄성코트 시공 후기`;
+      let finalSections: { type: string; content: string }[] = [];
+      let finalImages: string[] = [];
+      let finalHashtags = "#탄성코트 #KCOAT #베란다칠 #결로방지";
+
+      // Parse Korean key format from n8n
+      const sectionKeyMap: { [key: string]: string } = {
+        '인트로': 'intro',
+        '제품': 'product',
+        '오프닝': 'opening',
+        'USP': 'usp',
+        'FAQ': 'faq',
+        'TECH': 'tech',
+        '철학': 'philosophy',
+        '과정': 'process',
+        '정리': 'recap',
+        '헤더': 'header'
+      };
+
+      // Extract sections from Korean keys
+      for (const [koreanKey, englishType] of Object.entries(sectionKeyMap)) {
+        if (responseData[koreanKey]) {
+          finalSections.push({
+            type: englishType,
+            content: responseData[koreanKey]
+          });
+        }
+      }
+
+      // Extract hashtags
+      if (responseData['해시태그']) {
+        finalHashtags = responseData['해시태그'];
+      } else if (responseData.hashtags) {
+        finalHashtags = responseData.hashtags;
+      }
+
+      // Extract images - handle object format with html property
+      if (responseData.images && Array.isArray(responseData.images)) {
+        finalImages = responseData.images.map((img: any) => {
+          if (typeof img === 'string') {
+            return img;
+          }
+          if (img.html) {
+            // Extract src from HTML
+            const match = img.html.match(/src="([^"]+)"/);
+            return match ? match[1] : '';
+          }
+          if (img.url) {
+            return img.url;
+          }
+          return '';
+        }).filter((url: string) => url);
+      }
+
+      // Fallback: if sections still empty but sections array exists
+      if (!finalSections.length && responseData.sections) {
+        finalSections = responseData.sections;
+      }
+
+      // Fallback: if html exists but no sections, parse html
+      if (!finalSections.length && responseData.html) {
         finalSections = [{
           type: 'text',
-          content: data.html
+          content: responseData.html
         }];
       }
 

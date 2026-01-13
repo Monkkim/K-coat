@@ -1,0 +1,102 @@
+  
+  
+"인트로": 
+"<div class=\"block intro\">오늘은 반포 레미안 아파트 신축 세대에\n고급형 월드클래스 제품으로 베란다 시공 완료했습니다! 😊\n\n작업 시간은 약 4시간 소요되었고요,\n깔끔하고 매끄럽게 마무리했습니다! 🫡</div>",
+  
+  
+"제품": 
+"<div class=\"block product\">이번 시공에 사용된 제품은\nK-COAT의 고급형 월드클래스 제품이구요,\n색상은 애쉬 그레이로 선택하여 진행했습니다. 🥰\n\n월드클래스는 내곰팡이성 시험성적서는 물론이고\n중금속 불검출 인증까지 받은 프리미엄 제품이랍니다!\n신축 아파트에 딱 맞는 고급스러운 마감을 자랑하죠~ ✨</div>",
+  
+  
+"오프닝": 
+"<div class=\"block opening\">그럼 오늘은\n반포 레미안 아파트 베란다 탄성코트 시공 현장 이야기를\n자세히 들려드릴게요! 😁\n\n신축이라고 방심하면 안 되는 이유도 함께 말씀드리겠습니다~ 🤔</div>",
+  
+  
+"USP": 
+"<div class=\"block usp\">신축 현장도 시공 품질이 정말 중요합니다!\n처음부터 제대로 시공해야 오래도록 문제없이 사용할 수 있으니까요. 😎\n\nK-COAT는 옥상방수, 외벽방수는 물론이고\n구축부터 신축까지 모든 타입의 현장 경험이 풍부합니다!\n\n언제 어디에서 어떤 변수가 생길지 모르는 건축 현장,\n그래서 K-COAT처럼 다양한 시공 경험을 보유한 업체와 함께해야\n세심하고 완벽한 마무리가 가능하답니다! 💪</div>",
+  
+  
+"FAQ": 
+"<div class=\"block faq\">🤔 \"탄성코트 시공하면 곰팡이가 정말 안 생기나요?\"\n\n네! 월드클래스는 내곰팡이성 시험성적서를 보유한 제품입니다.\n곰팡이균이 서식할 수 없는 환경을 만들어주죠~ 🥰\n\n🤔 \"시공 직후 색상이 달라 보일 수 있나요?\"\n\n탄성코트는 건조 과정에서 약간의 색상 변화가 있을 수 있어요.\n하지만 완전히 건조되면 원래의 아름다운 색상으로 안정됩니다!\n보통 2~3일 정도 지나면 최종 색상을 확인하실 수 있습니다. 😊</div>",
+  
+  
+"TECH": 
+"<div class=\"block tech\">🔬 탄성코트의 과학적 원리\n\n곰팡이와 결로는 왜 생길까요?\n습기가 차가운 벽면을 만나면 물방울로 맺히고,\n그 습기가 오래 머물면 곰팡이가 번식하게 됩니다.\n\n탄성코트는 표면에 탄성막을 형성해서\n미세한 균열을 방지하고,\n내곰팡이 성분으로 곰팡이균 서식을 원천 차단합니다! 💡\n\n게다가 월드클래스는 중금속까지 불검출되어\n가족 건강을 최우선으로 생각하는 제품이죠~ ♥</div>",
+  
+  
+"철학": 
+"<div class=\"block philosophy\">K-COAT의 시공 철학은 명확합니다.\n\n단순히 페인트를 바르는 게 아니라,\n그 공간에서 생활하실 분들의 건강과 행복을 생각합니다. 🙂\n\n신축이든 구축이든,\n모든 현장을 우리 집처럼 정성스럽게 시공하는 것!\n\n그래서 K-COAT와 함께한 고객님들이\n언제나 만족하며 추천해주시는 것 같아요~ 🥰🥰</div>",
+  
+  
+"과정": 
+"<div class=\"block philosophy\">K-COAT의 시공 철학은 명확합니다.\n\n단순히 페인트를 바르는 게 아니라,\n그 공간에서 생활하실 분들의 건강과 행복을 생각합니다. 🙂\n\n신축이든 구축이든,\n모든 현장을 우리 집처럼 정성스럽게 시공하는 것!\n\n그래서 K-COAT와 함께한 고객님들이\n언제나 만족하며 추천해주시는 것 같아요~ 🥰🥰</div>",
+  
+  
+"정리": 
+"<div class=\"block process\">📋 K-COAT의 시공 프로세스\n\n1️⃣ 시공 전 상담\n현장 상태를 꼼꼼히 체크하고\n고객님 요구사항을 정확히 파악합니다.\n\n2️⃣ 세심한 밑작업\n표면 정리, 이물질 제거, 양생 작업까지\n기본에 충실하게 준비합니다. 😎\n\n3️⃣ 전문 시공\n숙련된 기술로 균일하고 매끄럽게 시공합니다.\n\n4️⃣ 마무리 점검\n디테일까지 놓치지 않고\n완벽하게 마무리합니다! ✨</div>",
+  
+  
+"해시태그": 
+"<div class=\"block hashtag\">#탄성코트 #친환경탄성코트 #베란다탄성코트 #신축탄성코트 #반포탄성코트 #반포페인트시공 #레미안탄성코트 #옥상방수 #외벽방수 #페인트도장전문업체 #케이코트 #탄성코트가격 #탄성코트견적 #벽면균열 #월드클래스 #중금속불검출 #내곰팡이성 #친환경페인트 #신축아파트시공 #애쉬그레이</div>",
+  
+  
+"images": 
+[
+  
+  
+  
+{
+  
+  
+  
+  
+"type": 
+"image",
+  
+  
+  
+  
+"order": 
+1,
+  
+  
+  
+  
+"html": 
+"\n<!DOCTYPE html>\n<html lang=\"ko\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <style>\n    body {\n      margin: 0;\n      padding: 16px;\n      background: #0f0f0f;\n      color: #fff;\n      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;\n    }\n    img {\n      max-width: 100%;\n      border-radius: 8px;\n      box-shadow: 0 8px 24px rgba(0,0,0,.4);\n    }\n  </style>\n</head>\n<body>\n  <img src=\"https://tempfile.aiquickdraw.com/image-format-converter/1768280550210-v8l6506ojk.png\" />\n</body>\n</html>\n"
+  
+  
+  
+},
+  
+  
+  
+{
+  
+  
+  
+  
+"type": 
+"image",
+  
+  
+  
+  
+"order": 
+2,
+  
+  
+  
+  
+"html": 
+"\n<!DOCTYPE html>\n<html lang=\"ko\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <style>\n    body {\n      margin: 0;\n      padding: 16px;\n      background: #0f0f0f;\n      color: #fff;\n      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;\n    }\n    img {\n      max-width: 100%;\n      border-radius: 8px;\n      box-shadow: 0 8px 24px rgba(0,0,0,.4);\n    }\n  </style>\n</head>\n<body>\n  <img src=\"https://tempfile.aiquickdraw.com/image-format-converter/1768280550210-v8l6506ojk.png\" />\n</body>\n</html>\n"
+  
+  
+  
+}
+  
+  
+]
+  
+}
+]
