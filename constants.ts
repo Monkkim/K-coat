@@ -45,5 +45,5 @@ export const ISSUE_TAGS = [
   "#벽면손상"
 ];
 
-// n8n 로컬 웹훅 주소
-export const WEBHOOK_URL = 'http://localhost:5678/webhook-test/send-email';
+// n8n 웹훅 주소
+export const WEBHOOK_URL = 'https://primary-production-c55d.up.railway.app/webhook-test/send-email';
