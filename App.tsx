@@ -74,7 +74,8 @@ const App: React.FC = () => {
       console.log("Raw response text:", text);
       
       if (!text || text.trim() === "") {
-        throw new Error("서버에서 빈 응답을 보냈습니다. n8n 워크플로우의 'Respond to Webhook' 노드를 확인해주세요.");
+        console.error("Empty response from n8n");
+        throw new Error("n8n 서버에서 빈 데이터를 보냈습니다. 'Respond to Webhook' 노드의 Response Body 설정을 확인해주세요.");
       }
 
       let data;
