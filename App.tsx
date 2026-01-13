@@ -51,18 +51,41 @@ const App: React.FC = () => {
     setApiResult(null);
 
     try {
+      console.log("Sending request to:", WEBHOOK_URL);
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        mode: 'cors',
         body: JSON.stringify(finalPayload),
       });
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
-        throw new Error(`서버 응답 오류: ${response.status}`);
+        const errorText = await response.text();
+        console.error("Error response body:", errorText);
+        throw new Error(`서버 응답 오류: ${response.status} ${errorText}`);
       }
 
-      const data = await response.json();
-      console.log("Raw API Response:", data);
+      const text = await response.text();
+      console.log("Raw response text:", text);
+      
+      if (!text || text.trim() === "") {
+        throw new Error("서버에서 빈 응답을 보냈습니다. n8n 워크플로우의 'Respond to Webhook' 노드를 확인해주세요.");
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("JSON parse error:", e);
+        throw new Error("서버 응답이 올바른 JSON 형식이 아닙니다. n8n 설정을 확인해주세요.");
+      }
+      
+      console.log("Parsed data:", data);
 
       // Handle array response (n8n returns array with single object)
       const responseData = Array.isArray(data) ? data[0] : data;
