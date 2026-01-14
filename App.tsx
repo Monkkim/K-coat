@@ -37,9 +37,15 @@ const App: React.FC = () => {
   };
 
   const startGeneration = async () => {
+    // 현재 화면에 보이는 photoSets 상태를 그대로 사용 (드래그 앤 드롭 정렬 반영됨)
     const processedSets = photoSets
       .filter(s => s.before && s.after)
-      .map(s => ({ before: s.before!, after: s.after! }));
+      .map(s => ({ 
+        before: s.before, 
+        after: s.after,
+        beforeName: s.beforeName,
+        afterName: s.afterName
+      }));
     
     const finalPayload = {
       ...formData,

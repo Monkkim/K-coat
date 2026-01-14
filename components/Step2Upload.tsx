@@ -32,11 +32,14 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
       const beforeFile = fileArray[i];
       const afterFile = fileArray[i + 1];
 
-      const beforeBase64 = await fileToBase64(beforeFile);
-      const afterBase64 = afterFile ? await fileToBase64(afterFile) : null;
+      // 각 파일마다 고유한 Base64 데이터를 생성하도록 보장
+      const [beforeBase64, afterBase64] = await Promise.all([
+        fileToBase64(beforeFile),
+        afterFile ? fileToBase64(afterFile) : Promise.resolve(null)
+      ]);
 
       newSets.push({
-        id: Math.random().toString(36).substr(2, 9),
+        id: `set-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         before: beforeBase64,
         after: afterBase64,
         beforeName: beforeFile.name,
