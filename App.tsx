@@ -37,16 +37,40 @@ const App: React.FC = () => {
   };
 
   const startGeneration = async () => {
+    console.log('🚀 AI 생성 시작');
+    console.log('📸 현재 photoSets 개수:', photoSets.length);
+
     // 현재 상태를 깊은 복사(Deep Copy)하여 데이터 꼬임 방지
     const processedSets = photoSets
       .filter(s => s.before && s.after)
-      .map(s => ({ 
-        before: String(s.before), 
-        after: String(s.after),
-        beforeName: s.beforeName,
-        afterName: s.afterName
-      }));
-    
+      .map((s, index) => {
+        console.log(`📋 세트 ${index + 1} 처리:`, {
+          beforeName: s.beforeName,
+          afterName: s.afterName,
+          beforePrefix: s.before?.substring(0, 50),
+          afterPrefix: s.after?.substring(0, 50),
+          beforeLength: s.before?.length,
+          afterLength: s.after?.length
+        });
+
+        return {
+          before: s.before!,
+          after: s.after!,
+          beforeName: s.beforeName,
+          afterName: s.afterName
+        };
+      });
+
+    console.log('✅ 처리된 세트 개수:', processedSets.length);
+
+    // 각 세트의 이미지가 고유한지 확인
+    const uniqueCheck = processedSets.map((set, idx) => ({
+      index: idx,
+      beforeHash: set.before.substring(0, 100),
+      afterHash: set.after.substring(0, 100)
+    }));
+    console.log('🔍 고유성 체크:', uniqueCheck);
+
     const finalPayload = {
       buildingName: formData.buildingName,
       workDate: formData.workDate,
@@ -59,7 +83,18 @@ const App: React.FC = () => {
       photoSets: processedSets
     };
 
-    setStep(3); 
+    console.log('📦 웹훅으로 전송할 페이로드:', {
+      ...finalPayload,
+      photoSets: processedSets.map((s, i) => ({
+        index: i,
+        beforeName: s.beforeName,
+        afterName: s.afterName,
+        beforeSize: s.before.length,
+        afterSize: s.after.length
+      }))
+    });
+
+    setStep(3);
     setIsGenerating(true);
     setApiResult(null);
 

@@ -1,10 +1,28 @@
 
 export const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
+    // 각 파일마다 완전히 독립적인 FileReader 인스턴스 생성
     const reader = new FileReader();
+
+    // 이벤트 핸들러를 명확하게 설정
+    reader.onload = (event) => {
+      const result = event.target?.result;
+      if (typeof result === 'string') {
+        console.log(`✅ 파일 변환 완료: ${file.name} (크기: ${result.length})`);
+        resolve(result);
+      } else {
+        reject(new Error('FileReader result is not a string'));
+      }
+    };
+
+    reader.onerror = (error) => {
+      console.error(`❌ 파일 변환 실패: ${file.name}`, error);
+      reject(error);
+    };
+
+    // 파일 읽기 시작
+    console.log(`🔄 파일 변환 시작: ${file.name}`);
     reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
   });
 };
 

@@ -22,34 +22,63 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
 
     setIsProcessing(true);
     // 파일 이름 순으로 먼저 정렬하여 Before/After 순서 보장
-    const fileArray = Array.from(files).sort((a, b) => 
+    const fileArray = Array.from(files).sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
     );
-    
+
+    console.log('📁 업로드된 파일 목록:', fileArray.map(f => f.name));
+
     const uploadedSets: PhotoSet[] = [];
 
+    // 각 파일을 순차적으로 처리하여 확실한 독립성 보장
     for (let i = 0; i < fileArray.length; i += 2) {
       const beforeFile = fileArray[i];
       const afterFile = fileArray[i + 1];
 
-      // 각 파일의 고유 인스턴스를 보장하기 위해 병렬 처리 대신 순차 처리 고려 혹은 Promise.all 유지하되 확실히 구분
+      console.log(`🔄 세트 ${i/2 + 1} 처리 중:`, {
+        beforeName: beforeFile.name,
+        afterName: afterFile?.name
+      });
+
+      // 각 파일을 명확하게 독립적으로 변환
       const beforeBase64 = await fileToBase64(beforeFile);
       const afterBase64 = afterFile ? await fileToBase64(afterFile) : null;
 
-      uploadedSets.push({
+      // Base64 앞부분만 로그로 확인 (전체는 너무 길어서)
+      console.log(`✅ 세트 ${i/2 + 1} 변환 완료:`, {
+        beforePrefix: beforeBase64?.substring(0, 50),
+        afterPrefix: afterBase64?.substring(0, 50),
+        beforeLength: beforeBase64?.length,
+        afterLength: afterBase64?.length
+      });
+
+      const newSet: PhotoSet = {
         id: `set-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 9)}`,
         before: beforeBase64,
         after: afterBase64,
         beforeName: beforeFile.name,
         afterName: afterFile?.name || ''
-      });
+      };
+
+      uploadedSets.push(newSet);
+
+      // 작은 딜레이로 각 파일 처리의 독립성 보장
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
+
+    console.log('📦 최종 uploadedSets 개수:', uploadedSets.length);
 
     setPhotoSets(prev => {
       const filteredPrev = prev.filter(s => s.before || s.after);
-      return [...filteredPrev, ...uploadedSets].slice(0, 10);
+      const newSets = [...filteredPrev, ...uploadedSets].slice(0, 10);
+      console.log('💾 상태 업데이트:', newSets.map((s, idx) => ({
+        index: idx,
+        beforePrefix: s.before?.substring(0, 30),
+        afterPrefix: s.after?.substring(0, 30)
+      })));
+      return newSets;
     });
-    
+
     setIsProcessing(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
