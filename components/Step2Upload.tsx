@@ -2,7 +2,7 @@
 import React, { useRef, useState } from 'react';
 import { PhotoSet } from '../types';
 import { fileToBase64 } from '../utils';
-import { Plus, X, Image as ImageIcon, ArrowLeft, Camera, UploadCloud, Trash2 } from 'lucide-react';
+import { Plus, X, Image as ImageIcon, ArrowLeft, Camera, UploadCloud, Trash2, GripVertical } from 'lucide-react';
 
 interface Step2UploadProps {
   photoSets: PhotoSet[];
@@ -13,6 +13,7 @@ interface Step2UploadProps {
 
 export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSets, onBack, onNext }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,8 +21,11 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
     if (!files || files.length === 0) return;
 
     setIsProcessing(true);
-    // Explicitly cast to File[] to fix 'unknown' type errors for sorting and processing
-    const fileArray = (Array.from(files) as File[]).sort((a, b) => a.name.localeCompare(b.name));
+    // 파일 이름 순으로 먼저 정렬하여 Before/After 순서 보장
+    const fileArray = Array.from(files).sort((a, b) => 
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    );
+    
     const newSets: PhotoSet[] = [];
 
     for (let i = 0; i < fileArray.length; i += 2) {
@@ -40,10 +44,9 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
       });
     }
 
-    // 기존 세트가 '초기화' 상태(사진 없음)면 교체, 아니면 추가
     setPhotoSets(prev => {
       const filteredPrev = prev.filter(s => s.before || s.after);
-      return [...filteredPrev, ...newSets].slice(0, 10); // 최대 10세트 제한
+      return [...filteredPrev, ...newSets].slice(0, 10);
     });
     
     setIsProcessing(false);
@@ -58,6 +61,27 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
     setPhotoSets([{ id: 'initial', before: null, after: null }]);
   };
 
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newSets = [...photoSets];
+    const draggedItem = newSets[draggedIndex];
+    newSets.splice(draggedIndex, 1);
+    newSets.splice(index, 0, draggedItem);
+    
+    setPhotoSets(newSets);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   const isAnyUploaded = photoSets.some(s => s.before && s.after);
 
   return (
@@ -69,7 +93,6 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
         </p>
       </div>
 
-      {/* Bulk Upload Zone */}
       <div 
         onClick={() => fileInputRef.current?.click()}
         className="group relative h-48 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-white hover:border-[#FF6B35] hover:bg-[#FF6B35]/5 transition-all cursor-pointer overflow-hidden shadow-sm"
@@ -98,7 +121,6 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
         )}
       </div>
 
-      {/* Result Sets */}
       {photoSets.some(s => s.before || s.after) && (
         <div className="space-y-4">
           <div className="flex justify-between items-center px-1">
@@ -115,7 +137,16 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
             {photoSets.map((set, index) => {
               if (!set.before && !set.after) return null;
               return (
-                <div key={set.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 relative group">
+                <div 
+                  key={set.id} 
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 relative group transition-all ${
+                    draggedIndex === index ? 'opacity-50 scale-95 border-[#FF6B35] border-dashed' : 'hover:border-[#FF6B35]/30'
+                  }`}
+                >
                   <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     <button 
                       onClick={() => removeSet(set.id)}
@@ -125,7 +156,11 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
                     </button>
                   </div>
                   
-                  <div className="text-xs font-black text-gray-300 w-8 italic">#{index + 1}</div>
+                  <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-50 rounded-lg transition-colors">
+                    <GripVertical className="w-5 h-5 text-gray-300 group-hover:text-gray-400" />
+                  </div>
+                  
+                  <div className="text-xs font-black text-gray-300 w-6 italic">#{index + 1}</div>
                   
                   <div className="flex-1 grid grid-cols-2 gap-3">
                     <div className="relative">
