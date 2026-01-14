@@ -37,18 +37,25 @@ const App: React.FC = () => {
   };
 
   const startGeneration = async () => {
-    // 현재 화면에 보이는 photoSets 상태를 그대로 사용 (드래그 앤 드롭 정렬 반영됨)
+    // 현재 상태를 깊은 복사(Deep Copy)하여 데이터 꼬임 방지
     const processedSets = photoSets
       .filter(s => s.before && s.after)
       .map(s => ({ 
-        before: s.before, 
-        after: s.after,
+        before: String(s.before), 
+        after: String(s.after),
         beforeName: s.beforeName,
         afterName: s.afterName
       }));
     
     const finalPayload = {
-      ...formData,
+      buildingName: formData.buildingName,
+      workDate: formData.workDate,
+      workType: formData.workType,
+      detailedLocation: formData.detailedLocation,
+      productType: formData.productType,
+      productColor: formData.productColor,
+      workHours: formData.workHours,
+      issues: formData.issues,
       photoSets: processedSets
     };
 

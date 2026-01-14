@@ -26,30 +26,28 @@ export const Step2Upload: React.FC<Step2UploadProps> = ({ photoSets, setPhotoSet
       a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
     );
     
-    const newSets: PhotoSet[] = [];
+    const uploadedSets: PhotoSet[] = [];
 
     for (let i = 0; i < fileArray.length; i += 2) {
       const beforeFile = fileArray[i];
       const afterFile = fileArray[i + 1];
 
-      // 각 파일마다 고유한 Base64 데이터를 생성하도록 보장
-      const [beforeBase64, afterBase64] = await Promise.all([
-        fileToBase64(beforeFile),
-        afterFile ? fileToBase64(afterFile) : Promise.resolve(null)
-      ]);
+      // 각 파일의 고유 인스턴스를 보장하기 위해 병렬 처리 대신 순차 처리 고려 혹은 Promise.all 유지하되 확실히 구분
+      const beforeBase64 = await fileToBase64(beforeFile);
+      const afterBase64 = afterFile ? await fileToBase64(afterFile) : null;
 
-      newSets.push({
-        id: `set-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      uploadedSets.push({
+        id: `set-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 9)}`,
         before: beforeBase64,
         after: afterBase64,
         beforeName: beforeFile.name,
-        afterName: afterFile?.name
+        afterName: afterFile?.name || ''
       });
     }
 
     setPhotoSets(prev => {
       const filteredPrev = prev.filter(s => s.before || s.after);
-      return [...filteredPrev, ...newSets].slice(0, 10);
+      return [...filteredPrev, ...uploadedSets].slice(0, 10);
     });
     
     setIsProcessing(false);
