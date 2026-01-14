@@ -56,14 +56,22 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
               <Calendar className="w-4 h-4 mr-2 text-[#FF6B35]" />
               시공 일자 <span className="text-red-500 ml-1">*</span>
             </label>
-            <div className="relative">
+            <div 
+              className="relative cursor-pointer group"
+              onClick={() => {
+                const input = document.getElementById('workDateInput') as HTMLInputElement;
+                if (input) input.showPicker();
+              }}
+            >
               <input 
+                id="workDateInput"
                 type="date"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all appearance-none cursor-pointer text-base"
+                style={{ fontSize: '1.1rem' }}
                 value={data.workDate}
                 onChange={(e) => updateData({ workDate: e.target.value })}
-                onClick={(e) => (e.currentTarget as any).showPicker?.()}
               />
+              <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-hover:text-[#FF6B35] transition-colors pointer-events-none" />
             </div>
           </div>
 
@@ -111,16 +119,23 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
             <Package className="w-4 h-4 mr-2 text-[#FF6B35]" />
             시공 제품 선택 <span className="text-red-500 ml-1">*</span>
           </label>
-          <select 
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all appearance-none"
-            value={data.productType}
-            onChange={(e) => updateData({ productType: e.target.value })}
-          >
-            <option value="">제품을 선택하세요</option>
-            {PRODUCT_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.label}>{opt.label}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select 
+              className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all appearance-none cursor-pointer"
+              value={data.productType}
+              onChange={(e) => updateData({ productType: e.target.value })}
+            >
+              <option value="">제품을 선택하세요</option>
+              {PRODUCT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.label}>{opt.label}</option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+              </svg>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -132,7 +147,7 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
             </label>
             <input 
               type="text"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all"
+              className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all"
               placeholder="예: 진주, 은하수, 라이트그레이"
               value={data.productColor}
               onChange={(e) => updateData({ productColor: e.target.value })}
@@ -203,7 +218,7 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
           <div className="flex gap-2">
             <input 
               type="text"
-              className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35]"
+              className="flex-1 px-4 py-2 text-sm rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35]"
               placeholder="직접 입력 후 엔터 (예: 결로심함)"
               value={customTag}
               onChange={(e) => setCustomTag(e.target.value)}
@@ -211,25 +226,11 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
             />
             <button 
               onClick={handleAddCustomTag}
-              className="p-2 bg-gray-100 text-gray-500 rounded-xl hover:bg-[#FF6B35] hover:text-white transition-all"
+              className="p-2 bg-gray-100 text-gray-500 rounded-2xl hover:bg-[#FF6B35] hover:text-white transition-all"
             >
               <Plus className="w-5 h-5" />
             </button>
           </div>
-        </div>
-
-        {/* Watermark Toggle */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-          <div>
-            <h4 className="text-sm font-semibold text-[#1A1D2E]">워터마크 자동 삽입</h4>
-            <p className="text-xs text-gray-500 mt-1">케이코트 로고를 결과 이미지에 자동 삽입합니다.</p>
-          </div>
-          <button 
-            onClick={() => updateData({ useWatermark: !data.useWatermark })}
-            className={`w-12 h-6 rounded-full relative transition-colors duration-200 ${data.useWatermark ? 'bg-[#FF6B35]' : 'bg-gray-300'}`}
-          >
-            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${data.useWatermark ? 'left-7' : 'left-1'}`} />
-          </button>
         </div>
       </div>
 
