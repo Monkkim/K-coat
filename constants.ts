@@ -9,9 +9,9 @@ export const COLORS = {
 
 export const PRODUCT_OPTIONS = [
   { 
-    value: "premium_zerostop", 
-    label: "프리미엄 제로스탑 (친환경)",
-    description: "내곰팡이성, 결로 예방 성능 인증"
+    value: "basic_bioceramic", 
+    label: "기본형 바이오세라믹",
+    description: "결로 방지 및 항곰팡이 기본 성능"
   },
   { 
     value: "world_class", 
@@ -19,20 +19,18 @@ export const PRODUCT_OPTIONS = [
     description: "내곰팡이성, 중금속 불검출 인증"
   },
   { 
-    value: "premium_coat", 
-    label: "프리미엄 코트",
-    description: "고급 마감, 내구성 강화"
+    value: "premium_zerostop", 
+    label: "프리미엄 제로스탑",
+    description: "내곰팡이성, 결로 예방 성능 인증"
+  },
+  { 
+    value: "general_elastic", 
+    label: "일반탄성",
+    description: "가성비 도장 시공"
   }
 ];
 
-export const COLOR_OPTIONS = [
-  "라이트 그레이",
-  "애쉬 그레이",
-  "세미 크림",
-  "백색",
-  "아이보리",
-  "기타 (직접 입력)"
-];
+export const COLOR_OPTIONS = [];
 
 export const ISSUE_TAGS = [
   "#곰팡이발생",

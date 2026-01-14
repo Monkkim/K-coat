@@ -1,8 +1,8 @@
 
-import React from 'react';
-import { PRODUCT_OPTIONS, COLOR_OPTIONS, ISSUE_TAGS } from '../constants';
+import React, { useState } from 'react';
+import { PRODUCT_OPTIONS, ISSUE_TAGS } from '../constants';
 import { WorkType } from '../types';
-import { Calendar, Building, MapPin, Package, Palette, Clock, Tag } from 'lucide-react';
+import { Calendar, Building, MapPin, Package, Palette, Clock, Tag, Plus, X } from 'lucide-react';
 
 interface Step1FormProps {
   data: any;
@@ -11,7 +11,20 @@ interface Step1FormProps {
 }
 
 export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }) => {
+  const [customTag, setCustomTag] = useState('');
   const isFormValid = data.buildingName && data.workDate && data.detailedLocation && data.productType && data.productColor;
+
+  const handleAddCustomTag = (e: React.KeyboardEvent | React.MouseEvent) => {
+    if ('key' in e && e.key !== 'Enter') return;
+    e.preventDefault();
+    if (customTag.trim()) {
+      const tag = customTag.startsWith('#') ? customTag.trim() : `#${customTag.trim()}`;
+      if (!data.issues.includes(tag)) {
+        updateData({ issues: [...data.issues, tag] });
+      }
+      setCustomTag('');
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -43,12 +56,15 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
               <Calendar className="w-4 h-4 mr-2 text-[#FF6B35]" />
               시공 일자 <span className="text-red-500 ml-1">*</span>
             </label>
-            <input 
-              type="date"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all"
-              value={data.workDate}
-              onChange={(e) => updateData({ workDate: e.target.value })}
-            />
+            <div className="relative">
+              <input 
+                type="date"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all appearance-none cursor-pointer"
+                value={data.workDate}
+                onChange={(e) => updateData({ workDate: e.target.value })}
+                onClick={(e) => (e.currentTarget as any).showPicker?.()}
+              />
+            </div>
           </div>
 
           {/* Work Type */}
@@ -102,7 +118,7 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
           >
             <option value="">제품을 선택하세요</option>
             {PRODUCT_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.label}>{opt.label}</option>
             ))}
           </select>
         </div>
@@ -114,16 +130,13 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
               <Palette className="w-4 h-4 mr-2 text-[#FF6B35]" />
               제품 색상 <span className="text-red-500 ml-1">*</span>
             </label>
-            <select 
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all appearance-none"
+            <input 
+              type="text"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35] transition-all"
+              placeholder="예: 진주, 은하수, 라이트그레이"
               value={data.productColor}
               onChange={(e) => updateData({ productColor: e.target.value })}
-            >
-              <option value="">색상을 선택하세요</option>
-              {COLOR_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* Work Hours */}
@@ -150,9 +163,9 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
         <div>
           <label className="flex items-center text-sm font-semibold text-[#1A1D2E] mb-2">
             <Tag className="w-4 h-4 mr-2 text-[#FF6B35]" />
-            현장 주요 이슈 (다중 선택 가능)
+            현장 주요 이슈 (다중 선택 및 추가 가능)
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-4">
             {ISSUE_TAGS.map(tag => (
               <button
                 key={tag}
@@ -171,6 +184,37 @@ export const Step1Form: React.FC<Step1FormProps> = ({ data, updateData, onNext }
                 {tag}
               </button>
             ))}
+            {data.issues.filter((tag: string) => !ISSUE_TAGS.includes(tag)).map((tag: string) => (
+              <div
+                key={tag}
+                className="flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-[#FF6B35] text-white border border-[#FF6B35]"
+              >
+                {tag}
+                <button 
+                  onClick={() => updateData({ issues: data.issues.filter((i: string) => i !== tag) })}
+                  className="ml-1.5 hover:text-red-200"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex gap-2">
+            <input 
+              type="text"
+              className="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/20 focus:border-[#FF6B35]"
+              placeholder="직접 입력 후 엔터 (예: 결로심함)"
+              value={customTag}
+              onChange={(e) => setCustomTag(e.target.value)}
+              onKeyDown={handleAddCustomTag}
+            />
+            <button 
+              onClick={handleAddCustomTag}
+              className="p-2 bg-gray-100 text-gray-500 rounded-xl hover:bg-[#FF6B35] hover:text-white transition-all"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
