@@ -24,29 +24,22 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
       setTitle(result.title || '');
       setHashtags(result.hashtags || '');
 
-      // Use sections if available (new format)
-      if (result.sections && result.sections.length > 0) {
+      // HTML 필드가 있으면 하나의 통합 블록으로 처리 (요청 사항)
+      if (result.html) {
+        setBlocks([{
+          id: `full-html-${Date.now()}`,
+          type: 'text',
+          content: result.html
+        }]);
+      }
+      // sections가 있으면 기존 방식대로 처리
+      else if (result.sections && result.sections.length > 0) {
         const initialBlocks: ContentBlock[] = result.sections.map((section, idx) => ({
           id: `block-${idx}-${Date.now()}`,
           type: 'text',
           content: section.content,
-          sectionType: section.type // Store section type for styling
+          sectionType: section.type
         }));
-        setBlocks(initialBlocks);
-      }
-      // Fallback to html parsing (old format)
-      else if (result.html) {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = result.html;
-        const initialBlocks: ContentBlock[] = [];
-
-        Array.from(tempDiv.children).forEach((child, idx) => {
-          initialBlocks.push({
-            id: `block-${idx}-${Date.now()}`,
-            type: 'text',
-            content: child.outerHTML
-          });
-        });
         setBlocks(initialBlocks);
       }
     }

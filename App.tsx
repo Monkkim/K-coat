@@ -144,27 +144,35 @@ const App: React.FC = () => {
       let finalImages: string[] = [];
       let finalHashtags = "#탄성코트 #KCOAT #베란다칠 #결로방지";
 
-      // Parse Korean key format from n8n
-      const sectionKeyMap: { [key: string]: string } = {
-        '인트로': 'intro',
-        '제품': 'product',
-        '오프닝': 'opening',
-        'USP': 'usp',
-        'FAQ': 'faq',
-        'TECH': 'tech',
-        '철학': 'philosophy',
-        '과정': 'process',
-        '정리': 'recap',
-        '헤더': 'header'
-      };
+      // Handle single HTML block response from n8n
+      if (responseData.html) {
+        finalSections = [{
+          type: 'full_html',
+          content: responseData.html
+        }];
+      } else {
+        // Parse Korean key format from n8n (fallback)
+        const sectionKeyMap: { [key: string]: string } = {
+          '인트로': 'intro',
+          '제품': 'product',
+          '오프닝': 'opening',
+          'USP': 'usp',
+          'FAQ': 'faq',
+          'TECH': 'tech',
+          '철학': 'philosophy',
+          '과정': 'process',
+          '정리': 'recap',
+          '헤더': 'header'
+        };
 
-      // Extract sections from Korean keys
-      for (const [koreanKey, englishType] of Object.entries(sectionKeyMap)) {
-        if (responseData[koreanKey]) {
-          finalSections.push({
-            type: englishType,
-            content: responseData[koreanKey]
-          });
+        // Extract sections from Korean keys
+        for (const [koreanKey, englishType] of Object.entries(sectionKeyMap)) {
+          if (responseData[koreanKey]) {
+            finalSections.push({
+              type: englishType,
+              content: responseData[koreanKey]
+            });
+          }
         }
       }
 
