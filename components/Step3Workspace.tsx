@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { N8NResponse, ContentBlock } from '../types';
+import { N8NResponse } from '../types';
 import { copyRichTextToClipboard } from '../utils';
-import { Loader2, Check, CheckCircle, Copy, GripVertical, Trash2, Plus, Image as ImageIcon, Layout, ArrowLeft, Save, Sparkles, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, Check, Copy, Layout, ArrowLeft, Save, Sparkles, Clock } from 'lucide-react';
+import { RichTextEditor } from './RichTextEditor';
 
 interface Step3WorkspaceProps {
   isGenerating: boolean;
@@ -12,11 +13,9 @@ interface Step3WorkspaceProps {
 }
 
 export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, result, onBack, onComplete }) => {
-  const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [title, setTitle] = useState('');
   const [hashtags, setHashtags] = useState('');
-  const [draggedImage, setDraggedImage] = useState<string | null>(null);
-  const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [editorContent, setEditorContent] = useState('');
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
 
   useEffect(() => {
@@ -24,23 +23,14 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
       setTitle(result.title || '');
       setHashtags(result.hashtags || '');
 
-      // HTML 필드가 있으면 하나의 통합 블록으로 처리 (요청 사항)
+      // HTML 필드가 있으면 에디터에 직접 설정
       if (result.html) {
-        setBlocks([{
-          id: `full-html-${Date.now()}`,
-          type: 'text',
-          content: result.html
-        }]);
+        setEditorContent(result.html);
       }
-      // sections가 있으면 기존 방식대로 처리
+      // sections가 있으면 합쳐서 에디터에 설정
       else if (result.sections && result.sections.length > 0) {
-        const initialBlocks: ContentBlock[] = result.sections.map((section, idx) => ({
-          id: `block-${idx}-${Date.now()}`,
-          type: 'text',
-          content: section.content,
-          sectionType: section.type
-        }));
-        setBlocks(initialBlocks);
+        const combinedHtml = result.sections.map(section => section.content).join('\n');
+        setEditorContent(combinedHtml);
       }
     }
   }, [result]);
@@ -52,15 +42,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
           ${title}
         </h1>
         
-        ${blocks.map(block => {
-          if (block.type === 'text') {
-            return block.content;
-          }
-          return `
-            <div style="text-align: center; margin: 40px 0;">
-              <img src="${block.content}" style="max-width: 100%; border-radius: 15px; display: block; margin: 0 auto;" alt="시공사진" />
-            </div>`;
-        }).join('')}
+        ${editorContent}
         
         <div style="margin-top: 60px; padding: 25px; background-color: #f8f9fa; border-radius: 12px; color: #666; font-size: 14px;">
           ${hashtags}
@@ -73,51 +55,6 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
       setCopyStatus('copied');
       setTimeout(() => setCopyStatus('idle'), 2000);
     }
-  };
-
-  const updateBlock = (id: string, content: string) => {
-    setBlocks(prev => prev.map(b => b.id === id ? { ...b, content } : b));
-  };
-
-  const removeBlock = (id: string) => {
-    setBlocks(prev => prev.filter(b => b.id !== id));
-  };
-
-  const onDrop = (index: number) => {
-    if (draggedImage) {
-      const newBlock: ContentBlock = {
-        id: `img-${Date.now()}-${Math.random()}`,
-        type: 'image',
-        content: draggedImage
-      };
-      const newBlocks = [...blocks];
-      newBlocks.splice(index, 0, newBlock);
-      setBlocks(newBlocks);
-      setDraggedImage(null);
-    } else if (draggedBlockId) {
-      const draggedIndex = blocks.findIndex(b => b.id === draggedBlockId);
-      if (draggedIndex === -1) return;
-
-      const newBlocks = [...blocks];
-      const [draggedBlock] = newBlocks.splice(draggedIndex, 1);
-
-      let targetIndex = index;
-      if (draggedIndex < index) {
-        targetIndex--;
-      }
-
-      newBlocks.splice(targetIndex, 0, draggedBlock);
-      setBlocks(newBlocks);
-      setDraggedBlockId(null);
-    }
-  };
-
-  const handleBlockDragStart = (blockId: string) => {
-    setDraggedBlockId(blockId);
-  };
-
-  const handleBlockDragEnd = () => {
-    setDraggedBlockId(null);
   };
 
   return (
@@ -138,15 +75,11 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
               </div>
             </div>
           </div>
-          {blocks.length > 0 && (
+          {editorContent && (
             <div className="mt-4 pt-4 border-t border-white/10">
               <div className="flex items-center text-sm">
                 <Check className="w-4 h-4 mr-2 text-green-400" />
-                <span className="text-gray-300">텍스트 블록 {blocks.length}개 생성 완료</span>
-              </div>
-              <div className="flex items-center text-sm mt-2">
-                <Loader2 className="w-4 h-4 mr-2 text-[#FF6B35] animate-spin" />
-                <span className="text-gray-300">이미지 합성 중... (5~10분 소요)</span>
+                <span className="text-gray-300">콘텐츠 생성 완료</span>
               </div>
             </div>
           )}
@@ -165,17 +98,17 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
           <div className="flex gap-2">
             <button 
               onClick={onComplete}
-              disabled={isGenerating || blocks.length === 0}
+              disabled={isGenerating || !editorContent}
               className="px-6 py-2.5 bg-[#1A1D2E] text-white rounded-xl text-sm font-black flex items-center justify-center hover:bg-black transition-all shadow-xl disabled:opacity-50"
             >
               <Save className="w-4 h-4 mr-2" /> 작업 완료 및 저장
             </button>
             <button 
               onClick={handleCopy}
-              disabled={blocks.length === 0}
+              disabled={!editorContent}
               className={`px-8 py-2.5 rounded-xl text-sm font-black text-white shadow-xl flex items-center transition-all transform active:scale-95 ${
                 copyStatus === 'copied' ? 'bg-green-500' : 'bg-[#FF6B35] hover:bg-[#e85a2a]'
-              } ${blocks.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${!editorContent ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {copyStatus === 'copied' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
               {copyStatus === 'copied' ? '복사 완료' : '네이버 블로그로 복사'}
@@ -210,66 +143,27 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
             </div>
 
             <div className="space-y-1">
-              {blocks.length === 0 && isGenerating && (
+              {!editorContent && isGenerating && (
                 <div className="py-20 flex flex-col items-center justify-center text-gray-300">
                   <Loader2 className="w-12 h-12 mb-4 text-[#FF6B35] animate-spin" />
                   <p className="text-lg font-bold text-[#1A1D2E] mb-2">AI가 블로그 콘텐츠를 생성하고 있습니다</p>
-                  <p className="text-sm italic">각 섹션이 블록 형태로 표시됩니다...</p>
+                  <p className="text-sm italic">잠시만 기다려 주세요...</p>
                 </div>
               )}
 
-              {blocks.length === 0 && !isGenerating && (
+              {!editorContent && !isGenerating && (
                 <div className="py-20 flex flex-col items-center justify-center text-gray-300">
                   <Clock className="w-10 h-10 mb-2 animate-pulse" />
                   <p className="italic">데이터를 기다리는 중...</p>
                 </div>
               )}
               
-              <DropArea onDrop={() => onDrop(0)} visible={blocks.length > 0} />
-              
-              {blocks.map((block, idx) => (
-                <React.Fragment key={block.id}>
-                  <div
-                    draggable
-                    onDragStart={() => handleBlockDragStart(block.id)}
-                    onDragEnd={handleBlockDragEnd}
-                    className={`group relative flex items-start gap-4 p-4 rounded-3xl hover:bg-gray-50/50 transition-all border border-transparent hover:border-gray-100 animate-in fade-in slide-in-from-left-4 ${
-                      draggedBlockId === block.id ? 'opacity-50' : ''
-                    }`}
-                    style={{ animationDelay: `${idx * 50}ms`, animationDuration: '300ms' }}
-                  >
-                    <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-4">
-                      <div className="cursor-grab active:cursor-grabbing p-2 bg-white rounded-xl shadow-sm border border-gray-100">
-                        <GripVertical className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <button
-                        onClick={() => removeBlock(block.id)}
-                        className="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-red-300 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex-1">
-                      {block.type === 'text' ? (
-                        <div
-                          contentEditable
-                          suppressContentEditableWarning
-                          onBlur={(e) => updateBlock(block.id, e.currentTarget.innerHTML)}
-                          className="outline-none prose prose-orange max-w-none py-2 text-lg font-medium leading-relaxed text-[#2D3436] whitespace-pre-wrap"
-                          dangerouslySetInnerHTML={{ __html: block.content }}
-                        />
-                      ) : (
-                        <div className="my-10 relative rounded-[32px] overflow-hidden border-8 border-white shadow-2xl group/img">
-                          <img src={block.content} className="w-full h-auto" alt="시공사진" />
-                          <div className="absolute top-6 left-6 px-4 py-2 bg-black/50 backdrop-blur-md text-white text-[10px] font-black rounded-full border border-white/20 uppercase tracking-widest">Construct Photo</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <DropArea onDrop={() => onDrop(idx + 1)} visible={true} />
-                </React.Fragment>
-              ))}
+              {editorContent && (
+                <RichTextEditor 
+                  content={editorContent} 
+                  onChange={setEditorContent} 
+                />
+              )}
             </div>
 
             <div className="mt-20 pt-10 border-t border-gray-100">
@@ -283,34 +177,6 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
-
-const DropArea: React.FC<{ onDrop: () => void, visible: boolean }> = ({ onDrop, visible }) => {
-  const [isOver, setIsOver] = useState(false);
-
-  if (!visible && !isOver) return <div className="h-4" />;
-
-  return (
-    <div 
-      onDragOver={(e) => { e.preventDefault(); setIsOver(true); }}
-      onDragLeave={() => setIsOver(false)}
-      onDrop={(e) => { e.preventDefault(); setIsOver(false); onDrop(); }}
-      className={`relative h-6 my-4 rounded-3xl transition-all flex items-center justify-center border-2 border-dashed ${
-        isOver 
-          ? 'bg-[#FF6B35]/5 border-[#FF6B35] h-32 opacity-100 z-10' 
-          : 'border-transparent opacity-0 hover:opacity-100 hover:border-gray-100 hover:h-16'
-      }`}
-    >
-      <div className={`flex flex-col items-center transition-transform ${isOver ? 'scale-110' : 'scale-90'}`}>
-        <div className="bg-[#FF6B35] p-2 rounded-full shadow-lg mb-2">
-          <Plus className="w-4 h-4 text-white" />
-        </div>
-        <span className="text-[10px] font-black text-[#FF6B35] uppercase tracking-widest">
-          {isOver ? "Release to Insert Photo" : "Drop Photo Here"}
-        </span>
       </div>
     </div>
   );
