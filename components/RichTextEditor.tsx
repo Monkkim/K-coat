@@ -1,8 +1,4 @@
-import React from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
+import React, { useRef, useEffect, useState } from 'react';
 import { 
   Bold, 
   Italic, 
@@ -27,72 +23,63 @@ interface RichTextEditorProps {
 const fontSizes = [12, 14, 16, 18, 20, 24, 28, 32, 36, 48];
 
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange }) => {
-  const [showFontSizeDropdown, setShowFontSizeDropdown] = React.useState(false);
-  const [currentFontSize, setCurrentFontSize] = React.useState(16);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [showFontSizeDropdown, setShowFontSizeDropdown] = useState(false);
+  const [currentFontSize, setCurrentFontSize] = useState(16);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
-        bulletList: {
-          HTMLAttributes: {
-            style: 'list-style-type: disc; padding-left: 24px; margin: 16px 0;',
-          },
-        },
-        horizontalRule: {
-          HTMLAttributes: {
-            style: 'border: none; border-top: 2px solid #e5e7eb; margin: 24px 0;',
-          },
-        },
-      }),
-      Underline,
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-    ],
-    content: content,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-lg max-w-none focus:outline-none min-h-[600px] p-8',
-        style: 'font-family: "Malgun Gothic", "맑은 고딕", sans-serif;',
-      },
-    },
-  });
+  useEffect(() => {
+    if (editorRef.current && content && !isInitialized) {
+      editorRef.current.innerHTML = content;
+      setIsInitialized(true);
+    }
+  }, [content, isInitialized]);
 
-  if (!editor) {
-    return null;
-  }
+  const handleInput = () => {
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
+
+  const execCommand = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+    handleInput();
+  };
 
   const applyFontSize = (size: number) => {
     setCurrentFontSize(size);
     setShowFontSizeDropdown(false);
     
-    const { from, to } = editor.state.selection;
-    editor.chain().focus().command(({ tr }) => {
-      tr.addMark(from, to, editor.schema.marks.textStyle?.create({ fontSize: `${size}px` }) || null);
-      return true;
-    }).run();
-    
-    const element = document.querySelector('.ProseMirror');
-    if (element) {
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      if (!range.collapsed) {
         const span = document.createElement('span');
         span.style.fontSize = `${size}px`;
         try {
           range.surroundContents(span);
-          onChange(editor.getHTML());
+          handleInput();
         } catch (e) {
-          console.log('Font size applied via editor styles');
+          execCommand('fontSize', '7');
+          const fontElements = editorRef.current?.querySelectorAll('font[size="7"]');
+          fontElements?.forEach(el => {
+            (el as HTMLElement).removeAttribute('size');
+            (el as HTMLElement).style.fontSize = `${size}px`;
+          });
+          handleInput();
         }
       }
     }
+    editorRef.current?.focus();
+  };
+
+  const formatBlock = (tag: string) => {
+    execCommand('formatBlock', tag);
+  };
+
+  const insertHorizontalRule = () => {
+    execCommand('insertHorizontalRule');
   };
 
   const ToolbarButton: React.FC<{
@@ -121,7 +108,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
 
   return (
     <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white">
-      <div className="bg-gray-50 border-b border-gray-100 p-3 flex flex-wrap items-center gap-1">
+      <div className="bg-gray-50 border-b border-gray-100 p-3 flex flex-wrap items-center gap-1 sticky top-0 z-10">
         <div className="relative">
           <button
             type="button"
@@ -152,22 +139,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
         <ToolbarDivider />
 
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          active={editor.isActive('heading', { level: 1 })}
+          onClick={() => formatBlock('h1')}
           title="제목 1"
         >
           <Heading1 className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          active={editor.isActive('heading', { level: 2 })}
+          onClick={() => formatBlock('h2')}
           title="제목 2"
         >
           <Heading2 className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          active={editor.isActive('heading', { level: 3 })}
+          onClick={() => formatBlock('h3')}
           title="제목 3"
         >
           <Heading3 className="w-4 h-4" />
@@ -176,22 +160,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
         <ToolbarDivider />
 
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          active={editor.isActive('bold')}
+          onClick={() => execCommand('bold')}
           title="굵게"
         >
           <Bold className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          active={editor.isActive('italic')}
+          onClick={() => execCommand('italic')}
           title="기울임"
         >
           <Italic className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          active={editor.isActive('underline')}
+          onClick={() => execCommand('underline')}
           title="밑줄"
         >
           <UnderlineIcon className="w-4 h-4" />
@@ -200,22 +181,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
         <ToolbarDivider />
 
         <ToolbarButton
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          active={editor.isActive({ textAlign: 'left' })}
+          onClick={() => execCommand('justifyLeft')}
           title="왼쪽 정렬"
         >
           <AlignLeft className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          active={editor.isActive({ textAlign: 'center' })}
+          onClick={() => execCommand('justifyCenter')}
           title="가운데 정렬"
         >
           <AlignCenter className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          active={editor.isActive({ textAlign: 'right' })}
+          onClick={() => execCommand('justifyRight')}
           title="오른쪽 정렬"
         >
           <AlignRight className="w-4 h-4" />
@@ -224,80 +202,83 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
         <ToolbarDivider />
 
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          active={editor.isActive('bulletList')}
+          onClick={() => execCommand('insertUnorderedList')}
           title="불릿 리스트"
         >
           <List className="w-4 h-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          onClick={insertHorizontalRule}
           title="구분선"
         >
           <Minus className="w-4 h-4" />
         </ToolbarButton>
       </div>
 
-      <EditorContent editor={editor} />
+      <div
+        ref={editorRef}
+        contentEditable
+        onInput={handleInput}
+        className="prose prose-lg max-w-none focus:outline-none min-h-[600px] p-8"
+        style={{ 
+          fontFamily: '"Malgun Gothic", "맑은 고딕", sans-serif',
+          lineHeight: 1.8 
+        }}
+      />
 
       <style>{`
-        .ProseMirror {
-          min-height: 600px;
-          padding: 32px;
-          font-size: 16px;
-          line-height: 1.8;
-        }
-        .ProseMirror:focus {
+        [contenteditable] {
           outline: none;
         }
-        .ProseMirror h1 {
+        [contenteditable] h1 {
           font-size: 32px;
           font-weight: 800;
           margin: 24px 0 16px 0;
           color: #1A1D2E;
         }
-        .ProseMirror h2 {
+        [contenteditable] h2 {
           font-size: 24px;
           font-weight: 700;
           margin: 20px 0 12px 0;
           color: #1A1D2E;
         }
-        .ProseMirror h3 {
+        [contenteditable] h3 {
           font-size: 20px;
           font-weight: 600;
           margin: 16px 0 8px 0;
           color: #1A1D2E;
         }
-        .ProseMirror p {
+        [contenteditable] p, [contenteditable] div {
           margin: 12px 0;
           color: #374151;
         }
-        .ProseMirror ul {
+        [contenteditable] ul {
           list-style-type: disc;
           padding-left: 24px;
           margin: 16px 0;
         }
-        .ProseMirror li {
+        [contenteditable] li {
           margin: 8px 0;
         }
-        .ProseMirror hr {
+        [contenteditable] hr {
           border: none;
           border-top: 2px solid #e5e7eb;
           margin: 24px 0;
         }
-        .ProseMirror img {
+        [contenteditable] img {
           max-width: 100%;
           height: auto;
           border-radius: 12px;
           margin: 16px 0;
+          display: block;
         }
-        .ProseMirror strong {
+        [contenteditable] strong, [contenteditable] b {
           font-weight: 700;
         }
-        .ProseMirror em {
+        [contenteditable] em, [contenteditable] i {
           font-style: italic;
         }
-        .ProseMirror u {
+        [contenteditable] u {
           text-decoration: underline;
         }
       `}</style>
