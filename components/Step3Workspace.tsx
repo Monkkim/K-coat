@@ -162,9 +162,6 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
           <p className="text-gray-400 text-sm mt-1">텍스트가 먼저 생성됩니다. 사진이 도착하면 본문에 배치하세요.</p>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="px-5 py-2.5 bg-gray-50 text-gray-500 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all flex items-center">
-            <ArrowLeft className="w-4 h-4 mr-2" /> 나가기
-          </button>
           <div className="flex gap-2">
             <button 
               onClick={onComplete}
@@ -184,6 +181,9 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
               {copyStatus === 'copied' ? '복사 완료' : '네이버 블로그로 복사'}
             </button>
           </div>
+          <button onClick={onBack} className="px-5 py-2.5 bg-gray-50 text-gray-500 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all flex items-center border border-gray-100">
+            <ArrowLeft className="w-4 h-4 mr-2" /> 나가기
+          </button>
         </div>
       </div>
 
