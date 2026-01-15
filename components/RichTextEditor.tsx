@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { 
   Bold, 
   Italic, 
@@ -27,17 +27,117 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
   const [showFontSizeDropdown, setShowFontSizeDropdown] = useState(false);
   const [currentFontSize, setCurrentFontSize] = useState(16);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [resizingImage, setResizingImage] = useState<HTMLImageElement | null>(null);
+  const [startX, setStartX] = useState(0);
+  const [startWidth, setStartWidth] = useState(0);
+
+  const setupImageResizeHandles = useCallback(() => {
+    if (!editorRef.current) return;
+    
+    const images = editorRef.current.querySelectorAll('img');
+    images.forEach((img) => {
+      if (img.parentElement?.classList.contains('img-resize-wrapper')) return;
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = 'img-resize-wrapper';
+      wrapper.style.cssText = 'position: relative; display: inline-block; max-width: 100%;';
+      
+      const handle = document.createElement('div');
+      handle.className = 'resize-handle';
+      handle.style.cssText = `
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        width: 16px;
+        height: 16px;
+        background: #FF6B35;
+        border-radius: 4px;
+        cursor: se-resize;
+        opacity: 0;
+        transition: opacity 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      `;
+      handle.innerHTML = `<svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+        <path d="M9 1L1 9M9 5L5 9M9 9L9 9" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>`;
+      
+      wrapper.addEventListener('mouseenter', () => {
+        handle.style.opacity = '1';
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        if (!resizingImage) {
+          handle.style.opacity = '0';
+        }
+      });
+      
+      handle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setResizingImage(img);
+        setStartX(e.clientX);
+        setStartWidth(img.offsetWidth);
+      });
+      
+      img.parentNode?.insertBefore(wrapper, img);
+      wrapper.appendChild(img);
+      wrapper.appendChild(handle);
+    });
+  }, [resizingImage]);
 
   useEffect(() => {
     if (editorRef.current && content && !isInitialized) {
       editorRef.current.innerHTML = content;
       setIsInitialized(true);
+      setTimeout(setupImageResizeHandles, 100);
     }
-  }, [content, isInitialized]);
+  }, [content, isInitialized, setupImageResizeHandles]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizingImage) return;
+      
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(100, startWidth + diff);
+      resizingImage.style.width = `${newWidth}px`;
+      resizingImage.style.height = 'auto';
+    };
+
+    const handleMouseUp = () => {
+      if (resizingImage) {
+        setResizingImage(null);
+        handleInput();
+      }
+    };
+
+    if (resizingImage) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingImage, startX, startWidth]);
 
   const handleInput = () => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      const clonedContent = editorRef.current.cloneNode(true) as HTMLElement;
+      const wrappers = clonedContent.querySelectorAll('.img-resize-wrapper');
+      wrappers.forEach((wrapper) => {
+        const img = wrapper.querySelector('img');
+        if (img) {
+          wrapper.parentNode?.insertBefore(img.cloneNode(true), wrapper);
+          wrapper.remove();
+        }
+      });
+      const handles = clonedContent.querySelectorAll('.resize-handle');
+      handles.forEach(h => h.remove());
+      
+      onChange(clonedContent.innerHTML);
     }
   };
 
@@ -222,7 +322,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
         className="prose prose-lg max-w-none focus:outline-none min-h-[600px] p-8"
         style={{ 
           fontFamily: '"Malgun Gothic", "맑은 고딕", sans-serif',
-          lineHeight: 1.8 
+          lineHeight: 1.8,
+          userSelect: resizingImage ? 'none' : 'auto'
         }}
       />
 
@@ -248,7 +349,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
           margin: 16px 0 8px 0;
           color: #1A1D2E;
         }
-        [contenteditable] p, [contenteditable] div {
+        [contenteditable] p, [contenteditable] div:not(.img-resize-wrapper):not(.resize-handle) {
           margin: 12px 0;
           color: #374151;
         }
@@ -270,6 +371,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChang
           height: auto;
           border-radius: 12px;
           margin: 16px 0;
+          display: block;
+        }
+        [contenteditable] .img-resize-wrapper {
+          margin: 16px 0;
+        }
+        [contenteditable] .img-resize-wrapper img {
+          margin: 0;
           display: block;
         }
         [contenteditable] strong, [contenteditable] b {
