@@ -161,27 +161,36 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
           </h2>
           <p className="text-gray-400 text-sm mt-1">텍스트가 먼저 생성됩니다. 사진이 도착하면 본문에 배치하세요.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-4">
           <button onClick={onBack} className="px-5 py-2.5 bg-gray-50 text-gray-500 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all flex items-center">
             <ArrowLeft className="w-4 h-4 mr-2" /> 나가기
           </button>
-          <button 
-            onClick={handleCopy}
-            disabled={blocks.length === 0}
-            className={`px-8 py-2.5 rounded-xl text-sm font-black text-white shadow-xl flex items-center transition-all transform active:scale-95 ${
-              copyStatus === 'copied' ? 'bg-green-500' : 'bg-[#FF6B35] hover:bg-[#e85a2a]'
-            } ${blocks.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {copyStatus === 'copied' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-            {copyStatus === 'copied' ? '복사 완료' : '네이버 블로그로 복사'}
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={onComplete}
+              disabled={isGenerating || blocks.length === 0}
+              className="px-6 py-2.5 bg-[#1A1D2E] text-white rounded-xl text-sm font-black flex items-center justify-center hover:bg-black transition-all shadow-xl disabled:opacity-50"
+            >
+              <Save className="w-4 h-4 mr-2" /> 작업 완료 및 저장
+            </button>
+            <button 
+              onClick={handleCopy}
+              disabled={blocks.length === 0}
+              className={`px-8 py-2.5 rounded-xl text-sm font-black text-white shadow-xl flex items-center transition-all transform active:scale-95 ${
+                copyStatus === 'copied' ? 'bg-green-500' : 'bg-[#FF6B35] hover:bg-[#e85a2a]'
+              } ${blocks.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {copyStatus === 'copied' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+              {copyStatus === 'copied' ? '복사 완료' : '네이버 블로그로 복사'}
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
+      <div className="grid grid-cols-1 gap-8 items-start">
         
         {/* 본문 에디터 */}
-        <div className="bg-white rounded-[40px] shadow-2xl border border-gray-100 overflow-hidden min-h-[900px]">
+        <div className="bg-white rounded-[40px] shadow-2xl border border-gray-100 overflow-hidden min-h-[900px] max-w-4xl mx-auto w-full">
           <div className="bg-[#1A1D2E] px-10 py-4 flex items-center justify-between">
             <div className="flex items-center text-white/50 text-[10px] font-black uppercase tracking-widest">
               <Layout className="w-3 h-3 mr-2" /> Live Workspace
@@ -273,98 +282,6 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
               />
             </div>
           </div>
-        </div>
-
-        {/* 우측 이미지 뱅크 */}
-        <div className="sticky top-28 space-y-6">
-          <div className="bg-[#1A1D2E] text-white p-8 rounded-[48px] shadow-2xl overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B35]/20 rounded-full blur-3xl -mr-16 -mt-16" />
-            
-            <div className="relative">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-sm font-black flex items-center uppercase tracking-widest text-[#FF6B35]">
-                  <ImageIcon className="w-5 h-5 mr-3" /> Photo Bank
-                </h3>
-                {isGenerating && <Loader2 className="w-4 h-4 text-[#FF6B35] animate-spin" />}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                {result?.images?.map((img, idx) => {
-                  // Extract image URL from HTML if needed
-                  let imageUrl = img;
-                  if (typeof img === 'string' && img.includes('<img')) {
-                    const match = img.match(/src="([^"]+)"/);
-                    if (match) imageUrl = match[1];
-                  }
-
-                  return (
-                    <div
-                      key={idx}
-                      draggable
-                      onDragStart={() => setDraggedImage(imageUrl)}
-                      className="aspect-square bg-white/5 rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing hover:ring-4 ring-[#FF6B35] transition-all group relative border border-white/5 shadow-inner"
-                    >
-                      <img src={imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Plus className="text-white w-6 h-6" />
-                      </div>
-                    </div>
-                  );
-                })}
-                
-                {isGenerating && (
-                  <>
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="aspect-square bg-white/5 rounded-2xl animate-pulse flex flex-col items-center justify-center border border-white/10">
-                        <ImageIcon className="w-6 h-6 text-white/10 mb-2" />
-                        <span className="text-[8px] text-white/20 font-bold uppercase">Synthesizing...</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-
-              {isGenerating && (
-                <div className="mt-6 p-4 bg-white/5 rounded-2xl border border-white/10">
-                  <div className="flex items-center text-[#FF6B35] text-xs font-bold mb-1">
-                    <AlertTriangle className="w-3 h-3 mr-2" /> 5-10분 대기 필요
-                  </div>
-                  <p className="text-[10px] text-gray-400 leading-relaxed">
-                    워터마크 삽입 및 고해상도 합성이 진행 중입니다. 텍스트를 먼저 편집하셔도 됩니다.
-                  </p>
-                </div>
-              )}
-
-              {!isGenerating && (!result?.images || result.images.length === 0) && (
-                <div className="text-center py-12 text-gray-600 text-xs italic">
-                  생성된 사진이 없습니다.
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl">
-            <h4 className="text-[10px] font-black text-[#1A1D2E] mb-5 uppercase tracking-widest flex items-center">
-              <span className="w-2 h-2 bg-[#FF6B35] rounded-full mr-3" /> Editor Tips
-            </h4>
-            <div className="space-y-4">
-              <div className="flex gap-3 items-start">
-                <p className="text-[11px] text-gray-500 leading-relaxed">사진은 <b>점선 영역</b>에 드래그하여 드롭하세요.</p>
-              </div>
-              <div className="flex gap-3 items-start">
-                <p className="text-[11px] text-gray-500 leading-relaxed">텍스트를 클릭하면 즉시 수정이 가능합니다.</p>
-              </div>
-            </div>
-          </div>
-
-          <button 
-            onClick={onComplete}
-            disabled={isGenerating || blocks.length === 0}
-            className="w-full py-6 bg-[#1A1D2E] text-white rounded-[32px] font-black text-lg flex items-center justify-center hover:bg-black transition-all shadow-2xl group disabled:opacity-50"
-          >
-            <Save className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" />
-            작업 완료 및 저장
-          </button>
         </div>
       </div>
     </div>
