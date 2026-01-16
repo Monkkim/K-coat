@@ -36,6 +36,8 @@ export function setupAuth(app: Express) {
     createTableIfMissing: true,
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   app.use(
     session({
       store: sessionStore,
@@ -43,9 +45,10 @@ export function setupAuth(app: Express) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: false,
+        secure: isProduction,
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000,
+        sameSite: isProduction ? 'strict' : 'lax',
       },
     })
   );
@@ -198,10 +201,8 @@ export function setupAuth(app: Express) {
         .set({ password: hashedTempPassword, resetToken: null, resetTokenExpiry: null })
         .where(eq(users.id, user.id));
 
-      console.log(`[비밀번호 재설정] ${email} - 임시 비밀번호: ${tempPassword}`);
-
       res.json({ 
-        message: '임시 비밀번호가 발급되었습니다. 콘솔에서 확인해주세요.',
+        message: '임시 비밀번호가 발급되었습니다.',
         tempPassword: tempPassword
       });
     } catch (error) {

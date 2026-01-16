@@ -18,7 +18,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const API_BASE = 'http://localhost:3001';
+  const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
