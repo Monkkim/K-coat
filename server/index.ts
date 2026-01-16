@@ -48,7 +48,7 @@ if (isProd) {
   const distPath = path.resolve(__dirname, '../dist');
   app.use(express.static(distPath));
   
-  app.get('*', (req, res) => {
+  app.get('/*', (req, res) => {
     if (!req.path.startsWith('/api')) {
       res.sendFile(path.join(distPath, 'index.html'));
     }
