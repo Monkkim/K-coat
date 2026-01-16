@@ -1,17 +1,23 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StepIndicator } from './components/StepIndicator';
 import { Step1Form } from './components/Step1Form';
 import { Step2Upload } from './components/Step2Upload';
 import { Step3Workspace } from './components/Step3Workspace';
 import { Step4Success } from './components/Step4Success';
+import { AuthPage } from './components/AuthPage';
 import { KCoatFormData, PhotoSet, N8NResponse } from './types';
 import { formatDate } from './utils';
 import { WEBHOOK_URL } from './constants';
-import { Sparkles, Crown } from 'lucide-react';
+import { Sparkles, Crown, LogOut, Loader2 } from 'lucide-react';
+
+const isProduction = import.meta.env.PROD;
 
 const App: React.FC = () => {
   const [step, setStep] = useState(1);
+  const [isAuthenticated, setIsAuthenticated] = useState(!isProduction);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(isProduction);
+  const [userName, setUserName] = useState('');
+
   const [formData, setFormData] = useState<KCoatFormData>({
     buildingName: '',
     workDate: formatDate(new Date()),
@@ -32,6 +38,39 @@ const App: React.FC = () => {
   const [apiResult, setApiResult] = useState<N8NResponse | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  useEffect(() => {
+    if (isProduction) {
+      checkAuth();
+    }
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/user');
+      if (res.ok) {
+        const user = await res.json();
+        setIsAuthenticated(true);
+        setUserName(user.name || user.username);
+      } else {
+        setIsAuthenticated(false);
+      }
+    } catch (err) {
+      setIsAuthenticated(false);
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      setIsAuthenticated(false);
+      setUserName('');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
   const updateFormData = (updates: Partial<KCoatFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
@@ -40,7 +79,6 @@ const App: React.FC = () => {
     console.log('🚀 AI 생성 시작');
     console.log('📸 현재 photoSets 개수:', photoSets.length);
 
-    // 현재 상태를 깊은 복사(Deep Copy)하여 데이터 꼬임 방지
     const processedSets = photoSets
       .filter(s => s.before && s.after)
       .map((s, index) => {
@@ -63,7 +101,6 @@ const App: React.FC = () => {
 
     console.log('✅ 처리된 세트 개수:', processedSets.length);
 
-    // 각 세트의 이미지가 고유한지 확인
     const uniqueCheck = processedSets.map((set, idx) => ({
       index: idx,
       beforeHash: set.before.substring(0, 100),
@@ -136,7 +173,6 @@ const App: React.FC = () => {
       
       console.log("Parsed data:", data);
 
-      // Handle array response (n8n returns array with single object)
       const responseData = Array.isArray(data) ? data[0] : data;
 
       let finalTitle = responseData.title || `(${formData.buildingName}) 탄성코트 시공 후기`;
@@ -144,14 +180,12 @@ const App: React.FC = () => {
       let finalImages: string[] = [];
       let finalHashtags = "#탄성코트 #KCOAT #베란다칠 #결로방지";
 
-      // Handle single HTML block response from n8n
       if (responseData.html) {
         finalSections = [{
           type: 'full_html',
           content: responseData.html
         }];
       } else {
-        // Parse Korean key format from n8n (fallback)
         const sectionKeyMap: { [key: string]: string } = {
           '인트로': 'intro',
           '제품': 'product',
@@ -165,7 +199,6 @@ const App: React.FC = () => {
           '헤더': 'header'
         };
 
-        // Extract sections from Korean keys
         for (const [koreanKey, englishType] of Object.entries(sectionKeyMap)) {
           if (responseData[koreanKey]) {
             finalSections.push({
@@ -176,21 +209,18 @@ const App: React.FC = () => {
         }
       }
 
-      // Extract hashtags
       if (responseData['해시태그']) {
         finalHashtags = responseData['해시태그'];
       } else if (responseData.hashtags) {
         finalHashtags = responseData.hashtags;
       }
 
-      // Extract images - handle object format with html property
       if (responseData.images && Array.isArray(responseData.images)) {
         finalImages = responseData.images.map((img: any) => {
           if (typeof img === 'string') {
             return img;
           }
           if (img.html) {
-            // Extract src from HTML
             const match = img.html.match(/src="([^"]+)"/);
             return match ? match[1] : '';
           }
@@ -201,12 +231,10 @@ const App: React.FC = () => {
         }).filter((url: string) => url);
       }
 
-      // Fallback: if sections still empty but sections array exists
       if (!finalSections.length && responseData.sections) {
         finalSections = responseData.sections;
       }
 
-      // Fallback: if html exists but no sections, parse html
       if (!finalSections.length && responseData.html) {
         finalSections = [{
           type: 'text',
@@ -231,6 +259,21 @@ const App: React.FC = () => {
     }
   };
 
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-[#FF6B35] animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">인증 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isProduction && !isAuthenticated) {
+    return <AuthPage onLoginSuccess={() => { setIsAuthenticated(true); checkAuth(); }} />;
+  }
+
   return (
     <div className="min-h-screen pb-20 bg-[#FAF9F6]">
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 shadow-sm">
@@ -241,9 +284,25 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl font-black text-[#1A1D2E] tracking-tight">K-COAT <span className="text-[#FF6B35]">STUDIO</span></h1>
           </div>
-          <div className="flex items-center space-x-1 bg-[#1A1D2E] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
-            <Crown className="w-3 h-3 text-yellow-400" />
-            <span>PRO PLAN</span>
+          <div className="flex items-center gap-3">
+            {isProduction && userName && (
+              <span className="text-sm text-gray-600">
+                안녕하세요, <span className="font-semibold">{userName}</span>님
+              </span>
+            )}
+            <div className="flex items-center space-x-1 bg-[#1A1D2E] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
+              <Crown className="w-3 h-3 text-yellow-400" />
+              <span>PRO PLAN</span>
+            </div>
+            {isProduction && isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1 text-gray-500 hover:text-[#FF6B35] transition-colors text-sm"
+              >
+                <LogOut className="w-4 h-4" />
+                로그아웃
+              </button>
+            )}
           </div>
         </div>
       </header>
