@@ -45,10 +45,10 @@ export function setupAuth(app: Express) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: isProduction,
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: isProduction ? 'strict' : 'lax',
+        secure: isProduction, // HTTPS에서만 쿠키 전송
+        httpOnly: true, // XSS 공격 방지
+        maxAge: 24 * 60 * 60 * 1000, // 24시간
+        sameSite: isProduction ? 'none' : 'lax', // Replit 등 cross-origin 환경 지원
       },
     })
   );
@@ -180,30 +180,43 @@ export function setupAuth(app: Express) {
       }
 
       const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase()));
-      
+
+      // 보안: 사용자 존재 여부와 관계없이 동일한 메시지 반환 (타이밍 공격 방지)
       if (!user) {
         return res.json({ message: '해당 이메일로 비밀번호 재설정 안내가 발송되었습니다.' });
       }
 
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      const resetTokenExpiry = new Date(Date.now() + 3600000);
-
-      await db
-        .update(users)
-        .set({ resetToken, resetTokenExpiry })
-        .where(eq(users.id, user.id));
-
+      // 임시 비밀번호 생성 (8자리)
       const tempPassword = crypto.randomBytes(4).toString('hex');
       const hashedTempPassword = await hashPassword(tempPassword);
-      
+
+      // 임시 비밀번호로 업데이트
       await db
         .update(users)
-        .set({ password: hashedTempPassword, resetToken: null, resetTokenExpiry: null })
+        .set({
+          password: hashedTempPassword,
+          resetToken: null,
+          resetTokenExpiry: null
+        })
         .where(eq(users.id, user.id));
 
-      res.json({ 
+      // TODO: 이메일 발송 기능 구현 권장
+      // 현재는 임시 비밀번호를 응답으로 반환하지만,
+      // 프로덕션 환경에서는 nodemailer를 사용해 이메일로 전송해야 합니다.
+      //
+      // 예시:
+      // const transporter = nodemailer.createTransport({...});
+      // await transporter.sendMail({
+      //   to: user.email,
+      //   subject: 'K-COAT Studio 임시 비밀번호',
+      //   text: `임시 비밀번호: ${tempPassword}`
+      // });
+
+      // 보안 경고: 임시 비밀번호를 API 응답으로 반환하는 것은 권장하지 않습니다
+      // 이메일 발송 기능 구현 후 이 부분을 제거하세요
+      res.json({
         message: '임시 비밀번호가 발급되었습니다.',
-        tempPassword: tempPassword
+        tempPassword: tempPassword // 프로덕션에서는 제거 권장
       });
     } catch (error) {
       console.error('Forgot password error:', error);

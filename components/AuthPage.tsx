@@ -18,7 +18,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:3001';
+  // Replit 환경에서도 작동하도록 환경변수 지원
+  const API_BASE = import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? '' : 'http://localhost:3001');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -17,7 +17,9 @@ interface User {
   name: string;
 }
 
-const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:3001';
+// Replit 환경에서도 작동하도록 환경변수 지원
+const API_BASE = import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? '' : 'http://localhost:3001');
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
