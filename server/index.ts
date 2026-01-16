@@ -23,6 +23,9 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 async function initDatabase() {
   try {
+    console.log('📦 데이터베이스 초기화 시작...');
+
+    // users 테이블 생성
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -32,9 +35,20 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT NOW() NOT NULL
       )
     `);
-    console.log('Database initialized successfully');
+
+    console.log('✅ 데이터베이스 초기화 완료');
+
+    // 테이블 확인
+    const result = await pool.query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+    `);
+    console.log('📊 현재 테이블:', result.rows.map(r => r.table_name).join(', '));
+
   } catch (err) {
-    console.error('Database initialization error:', err);
+    console.error('❌ 데이터베이스 초기화 실패:', err);
+    throw err; // 에러를 던져서 서버 시작 중단
   }
 }
 
