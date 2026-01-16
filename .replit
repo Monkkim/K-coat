@@ -54,6 +54,12 @@ localPort = 5000
 externalPort = 80
 
 [deployment]
-deploymentTarget = "static"
+deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 publicDir = "dist"
+run = ["node", "--experimental-specifier-resolution=node", "--loader", "tsx", "server/index.ts"]
+
+[userenv]
+
+[userenv.production]
+NODE_ENV = "production"
