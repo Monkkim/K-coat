@@ -152,10 +152,7 @@ export function setupAuth(app: Express) {
 
       await storage.updateUserResetToken(email, resetToken, resetTokenExpiry);
 
-      res.status(200).json({ 
-        message: "비밀번호 재설정 이메일이 전송되었습니다.",
-        resetToken: resetToken 
-      });
+      res.status(200).json({ message: "비밀번호 재설정 이메일이 전송되었습니다." });
     } catch (err) {
       console.error("Forgot password error:", err);
       res.status(500).json({ message: "오류가 발생했습니다." });
