@@ -1,16 +1,27 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StepIndicator } from './components/StepIndicator';
 import { Step1Form } from './components/Step1Form';
 import { Step2Upload } from './components/Step2Upload';
 import { Step3Workspace } from './components/Step3Workspace';
 import { Step4Success } from './components/Step4Success';
+import { AuthPage } from './components/AuthPage';
 import { KCoatFormData, PhotoSet, N8NResponse } from './types';
 import { formatDate } from './utils';
 import { WEBHOOK_URL } from './constants';
-import { Sparkles, Crown } from 'lucide-react';
+import { Sparkles, Crown, LogOut, Loader2 } from 'lucide-react';
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+}
+
+const API_BASE = 'http://localhost:3001';
 
 const App: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<KCoatFormData>({
     buildingName: '',
@@ -31,6 +42,39 @@ const App: React.FC = () => {
 
   const [apiResult, setApiResult] = useState<N8NResponse | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/user`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.log('Auth check failed:', error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      setUser(null);
+      setStep(1);
+      setApiResult(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const updateFormData = (updates: Partial<KCoatFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -231,6 +275,18 @@ const App: React.FC = () => {
     }
   };
 
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F6]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#FF6B35]" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage onLogin={setUser} />;
+  }
+
   return (
     <div className="min-h-screen pb-20 bg-[#FAF9F6]">
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 shadow-sm">
@@ -241,9 +297,19 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-xl font-black text-[#1A1D2E] tracking-tight">K-COAT <span className="text-[#FF6B35]">STUDIO</span></h1>
           </div>
-          <div className="flex items-center space-x-1 bg-[#1A1D2E] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
-            <Crown className="w-3 h-3 text-yellow-400" />
-            <span>PRO PLAN</span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600">{user.name}님</span>
+            <div className="flex items-center space-x-1 bg-[#1A1D2E] text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
+              <Crown className="w-3 h-3 text-yellow-400" />
+              <span>PRO PLAN</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 px-3 py-1.5 text-gray-500 hover:text-[#FF6B35] transition-colors text-sm"
+              title="로그아웃"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
