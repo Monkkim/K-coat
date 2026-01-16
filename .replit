@@ -57,7 +57,7 @@ externalPort = 80
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 publicDir = "dist"
-run = ["node", "--experimental-specifier-resolution=node", "--loader", "tsx", "server/index.ts"]
+run = ["node", "--import", "tsx", "server/index.ts"]
 
 [userenv]
 
