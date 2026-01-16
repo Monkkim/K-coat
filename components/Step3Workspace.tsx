@@ -23,14 +23,16 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({ isGenerating, re
       setTitle(result.title || '');
       setHashtags(result.hashtags || '');
 
-      // HTML 필드가 있으면 에디터에 직접 설정
+      // HTML 필드가 있으면 에디터에 직접 설정 (가운데 정렬 적용)
       if (result.html) {
-        setEditorContent(result.html);
+        const centeredHtml = `<div style="text-align: center;">${result.html}</div>`;
+        setEditorContent(centeredHtml);
       }
-      // sections가 있으면 합쳐서 에디터에 설정
+      // sections가 있으면 합쳐서 에디터에 설정 (가운데 정렬 적용)
       else if (result.sections && result.sections.length > 0) {
         const combinedHtml = result.sections.map(section => section.content).join('\n');
-        setEditorContent(combinedHtml);
+        const centeredHtml = `<div style="text-align: center;">${combinedHtml}</div>`;
+        setEditorContent(centeredHtml);
       }
     }
   }, [result]);
